@@ -2,20 +2,69 @@ import React from "react";
 import { UserIcon } from "./Icons";
 /** @jsx jsx */
 import { css, jsx } from "@emotion/core";
-import { fontSize } from "./styles";
+import { gray1, gray2, gray5 } from "./styles";
 export const Header = () => (
   <div
     css={css`
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: ${fontSize};
-      background-color: #5c5c5a;
+      position: fixed;
+      box-sizing: border-box;
+      top: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background-color: #fff;
+      border-bottom: solid 1px ${gray5};
+      box-shadow: 0 3px 7px 0 rgba(110, 112, 114, 0.21);
     `}
   >
-    <a href="./">Q&A</a>
-    <input type="text" placeholder="search..." />
-    <a href="./signin">
-      <UserIcon />
-      Sign In
+    <a
+      href="./"
+      css={css`
+        font-size: 24px;
+        font-weight: bold;
+        color: ${gray1};
+        text-decoration: none;
+      `}
+    >
+      Q&A
+    </a>
+    <input
+      type="text"
+      placeholder="search..."
+      css={css`
+        box-sizing: border-box;
+        padding: 8px 10px;
+        border: 1px solid ${gray5};
+        border-radius: 3px;
+        color: ${gray2};
+        background-color: white;
+        width: 200px;
+        height: 30px;
+        :focus {
+          outline-color: ${gray5};
+        }
+      `}
+    />
+    <a
+      href="./signin"
+      css={css`
+        padding: 5px 10px;
+        background-color: transparent;
+        color: ${gray2};
+        text-decoration: none;
+        cursor: pointer;
+        span {
+          margin-left: 10px;
+        }
+        :focus {
+          outline-color: ${gray5};
+        }
+      `}
+    >
+      {" "}
+      <UserIcon /> <span>Sign In</span>
     </a>
   </div>
 );
