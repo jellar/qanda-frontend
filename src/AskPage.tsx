@@ -34,8 +34,6 @@ const AskPage: FC<Props> = ({
     postQuestion({
       title: values.title,
       content: values.content,
-      userName: 'Fred',
-      created: new Date(),
     });
   };
 

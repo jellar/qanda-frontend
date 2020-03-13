@@ -1,13 +1,26 @@
 import React, { FC, Fragment, useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { Page } from './Page';
-import { QuestionData, getQuestion, postAnswer } from './QuestionsData';
+import {
+  QuestionData,
+  getQuestion,
+  postAnswer,
+  mapQuestionFromServer,
+  QuestionDataFromServer,
+} from './QuestionsData';
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  HubConnectionState,
+} from '@aspnet/signalr';
 import { gray3, gray6 } from './styles';
 import { AnswerList } from './AnswerList';
 import { Form, required, minLength, Values } from './Form';
 import { Field } from './Field';
+import { useAuth } from './Auth';
+
 interface RouterParams {
   questionId: string;
 }
@@ -15,16 +28,73 @@ export const QuestionPage: FC<RouteComponentProps<RouterParams>> = ({
   match,
 }) => {
   const [question, setQuestion] = useState<QuestionData | null>(null);
+  const setUpSignalRConnection = async (questionId: number) => {
+    const connection = new HubConnectionBuilder()
+      .withUrl('https://localhost:44339/questionshub')
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on('Message', (message: string) => {
+      console.log('Message', message);
+    });
+
+    connection.on('ReceiveQuestion', (question: QuestionDataFromServer) => {
+      console.log('ReceiveQuestion', question);
+      setQuestion(mapQuestionFromServer(question));
+    });
+
+    try {
+      await connection.start();
+    } catch (err) {
+      console.log(err);
+    }
+    if (connection.state === HubConnectionState.Connected) {
+      connection.invoke('SubscribeQuestion', questionId).catch((err: Error) => {
+        return console.error(err.toString());
+      });
+    }
+    return connection;
+  };
+
+  const cleanUpSignalrConnection = async (
+    questionId: number,
+    connection: HubConnection,
+  ) => {
+    if (connection.state === HubConnectionState.Connected) {
+      try {
+        await connection.invoke('UnsubscribeQuestion', questionId);
+      } catch (err) {
+        return console.error(err.toString());
+      }
+      connection.off('Message');
+      connection.off('ReceiveQuestion');
+      connection.stop();
+    } else {
+      connection.off('Message');
+      connection.off('ReceiveQuestion');
+      connection.stop();
+    }
+  };
 
   useEffect(() => {
     const doGetQuestion = async (questionId: number) => {
       const question = await getQuestion(questionId);
       setQuestion(question);
     };
+    let connection: HubConnection;
     if (match.params.questionId) {
       const questionId = Number(match.params.questionId);
       doGetQuestion(questionId);
+      setUpSignalRConnection(questionId).then(con => {
+        connection = con;
+      });
     }
+    return function cleanUp() {
+      if (match.params.questionId) {
+        const questionId = Number(match.params.questionId);
+        cleanUpSignalrConnection(questionId, connection);
+      }
+    };
   }, [match.params.questionId]);
 
   const handleSubmit = async (values: Values) => {
@@ -36,6 +106,8 @@ export const QuestionPage: FC<RouteComponentProps<RouterParams>> = ({
     });
     return { success: result ? true : false };
   };
+
+  const { isAuthenticated } = useAuth();
 
   return (
     <Page>
@@ -79,20 +151,22 @@ export const QuestionPage: FC<RouteComponentProps<RouterParams>> = ({
   ${question.created.toLocaleTimeString()}`}
             </div>
             <AnswerList answers={question.answers}></AnswerList>
-            <Form
-              submitCaption="Submit Your Answer"
-              validationRules={{
-                content: [
-                  { validator: required },
-                  { validator: minLength, args: 50 },
-                ],
-              }}
-              onSubmit={handleSubmit}
-              failureMessage="There was a problem with your answer"
-              successMessage="Your answer was successfully submitted."
-            >
-              <Field name="content" label="Your Answer" type="TextArea" />
-            </Form>
+            {isAuthenticated && (
+              <Form
+                submitCaption="Submit Your Answer"
+                validationRules={{
+                  content: [
+                    { validator: required },
+                    { validator: minLength, args: 50 },
+                  ],
+                }}
+                onSubmit={handleSubmit}
+                failureMessage="There was a problem with your answer"
+                successMessage="Your answer was successfully submitted."
+              >
+                <Field name="content" label="Your Answer" type="TextArea" />
+              </Form>
+            )}
           </Fragment>
         )}
       </div>

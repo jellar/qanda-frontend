@@ -1,9 +1,9 @@
-import React, { FC } from "react";
+import React, { FC } from 'react';
 /** @jsx jsx */
-import { css, jsx } from "@emotion/core";
-import { gray5, accent2 } from "./styles";
-import { QuestionData } from "./QuestionsData";
-import { Question } from "./Question";
+import { css, jsx } from '@emotion/core';
+import { gray5, accent2 } from './styles';
+import { QuestionData } from './QuestionsData';
+import { Question } from './Question';
 
 interface Props {
   data: QuestionData[];
@@ -11,7 +11,6 @@ interface Props {
 }
 
 export const QuestionList: FC<Props> = ({ data, renderItem }) => {
-  console.log("Rendering questions", data, renderItem);
   return (
     <ul
       css={css`

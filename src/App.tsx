@@ -11,48 +11,74 @@ import { fontFamily, fontSize, gray2 } from './styles';
 import { SearchPage } from './SearchPage';
 import { QuestionPage } from './QuestionPage';
 import { SignInPage } from './SignInPage';
+import { SignOutPage } from './SignOutPage';
 import { NotFoundPage } from './NotFoundPage';
+import { AuthProvider } from './Auth';
+import { AuthorizedPage } from './AuthorizedPage';
 
 const AskPage = lazy(() => import('./AskPage'));
 const store = configureStore();
 function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter>
-        <div
-          css={css`
-            font-family: ${fontFamily};
-            font-size: ${fontSize};
-            color: ${gray2};
-          `}
-        >
-          <Header />
-          <Switch>
-            <Redirect from="/home" to="/" />
-            <Route exact path="/" component={HomePage} />
-            <Route path="/search" component={SearchPage} />
-            <Route path="/ask">
-              <Suspense
-                fallback={
-                  <div
-                    css={css`
-                      font-size: 15px;
-                      font-style: italic;
-                    `}
-                  >
-                    loading...
-                  </div>
-                }
-              >
-                <AskPage />
-              </Suspense>
-            </Route>
-            <Route path="/signin" component={SignInPage} />
-            <Route path="/questions/:questionId" component={QuestionPage} />
-            <Route component={NotFoundPage} />
-          </Switch>
-        </div>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <div
+            css={css`
+              font-family: ${fontFamily};
+              font-size: ${fontSize};
+              color: ${gray2};
+            `}
+          >
+            <Header />
+            <Switch>
+              <Redirect from="/home" to="/" />
+              <Route exact path="/" component={HomePage} />
+              <Route path="/search" component={SearchPage} />
+              <Route path="/ask">
+                <Suspense
+                  fallback={
+                    <div
+                      css={css`
+                        font-size: 15px;
+                        font-style: italic;
+                      `}
+                    >
+                      loading...
+                    </div>
+                  }
+                >
+                  <AuthorizedPage>
+                    <AskPage />
+                  </AuthorizedPage>
+                </Suspense>
+              </Route>
+              <Route
+                path="/signin"
+                render={() => <SignInPage action="signin"></SignInPage>}
+              />
+              <Route
+                path="/signin-callback"
+                render={() => (
+                  <SignInPage action="signin-callback"></SignInPage>
+                )}
+              />
+              <Route
+                path="/signout"
+                render={() => <SignOutPage action="signout"></SignOutPage>}
+              />
+              <Route
+                path="/signout-callback"
+                render={() => (
+                  <SignOutPage action="signout-callback"></SignOutPage>
+                )}
+              />
+              <Route path="/questions/:questionId" component={QuestionPage} />
+              <Route component={NotFoundPage} />
+            </Switch>
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
     </Provider>
   );
 }

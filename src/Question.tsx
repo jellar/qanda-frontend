@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
+
 import { gray2, gray3 } from './styles';
 import { QuestionData } from './QuestionsData';
 
